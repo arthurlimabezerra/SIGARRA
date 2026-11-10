@@ -1,5 +1,6 @@
 import os
 import json
+import pymysql
 from datetime import datetime, timezone, timedelta
 from flask import Flask, request, jsonify, render_template, session, send_from_directory
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -22,10 +23,8 @@ def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-
 def limpar_cpf(cpf_bruto):
     return ''.join(filter(str.isdigit, str(cpf_bruto))) if cpf_bruto else ''
-
 
 # ---------------------------------------------------------
 # ROTAS DE PÁGINAS (HTML)
@@ -77,7 +76,7 @@ def cadastrar():
 
     try:
         conn = get_connection()
-        cursor = conn.cursor(dictionary=True)
+        cursor = conn.cursor(pymysql.cursors.DictCursor)
 
         cursor.execute("SELECT id FROM usuarios WHERE cpf = %s", (cpf,))
         if cursor.fetchone():
@@ -85,6 +84,9 @@ def cadastrar():
             return jsonify({"status": "error", "message": "CPF já cadastrado no sistema."}), 400
 
         senha_hash = generate_password_hash(senha)
+        
+        # Volta ao cursor padrão para fazer o insert
+        cursor = conn.cursor()
         cursor.execute(
             "INSERT INTO usuarios (nome, cpf, senha_hash, perfil) VALUES (%s, %s, %s, 'aluno')",
             (nome, cpf, senha_hash)
@@ -117,7 +119,7 @@ def login():
 
     try:
         conn = get_connection()
-        cursor = conn.cursor(dictionary=True)
+        cursor = conn.cursor(pymysql.cursors.DictCursor)
         cursor.execute("SELECT id, nome, senha_hash, perfil FROM usuarios WHERE cpf = %s", (cpf,))
         usuario = cursor.fetchone()
         conn.close()
@@ -157,7 +159,7 @@ def logout():
 def listar_oferta_turmas():
     try:
         conn = get_connection()
-        cursor = conn.cursor(dictionary=True)
+        cursor = conn.cursor(pymysql.cursors.DictCursor)
         query = """
             SELECT 
                 d.id AS disciplina_id,
@@ -234,7 +236,7 @@ def minha_matricula_atual():
     aluno_id = session['user_id']
     try:
         conn = get_connection()
-        cursor = conn.cursor(dictionary=True)
+        cursor = conn.cursor(pymysql.cursors.DictCursor)
         query = """
             SELECT m.turma_id, d.nome AS disciplina_nome, t.codigo_turma, t.turno, t.horario AS horario_descricao
             FROM matricula_atual m
@@ -313,6 +315,44 @@ def enviar_apelo_modificacao():
 
 
 # ---------------------------------------------------------
+# ROTA DO PAINEL DO ALUNO (CONSULTA EXTERNA DE CPF)
+# ---------------------------------------------------------
+
+@app.route('/api/status-matricula', methods=['GET'])
+def status_matricula():
+    cpf = request.args.get('cpf')
+    cpf = limpar_cpf(cpf)
+    
+    if not cpf or len(cpf) != 11:
+        return jsonify({"status": "error", "message": "CPF inválido."}), 400
+
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(pymysql.cursors.DictCursor)
+        
+        # Puxa a solicitação mais recente vinculada a esse CPF
+        query = """
+            SELECT u.nome, s.status, s.justificativa AS observacao
+            FROM solicitacoes_modificacao s
+            JOIN usuarios u ON s.aluno_id = u.id
+            WHERE u.cpf = %s
+            ORDER BY s.data_solicitacao DESC
+            LIMIT 1
+        """
+        cursor.execute(query, (cpf,))
+        resultado = cursor.fetchone()
+        conn.close()
+
+        if resultado:
+            return jsonify(resultado), 200
+        else:
+            return jsonify({"status": "error", "message": "Nenhuma solicitação encontrada"}), 404
+
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+# ---------------------------------------------------------
 # ROTAS DO COORDENADOR
 # ---------------------------------------------------------
 
@@ -320,9 +360,8 @@ def enviar_apelo_modificacao():
 def listar_todas_solicitacoes():
     try:
         conn = get_connection()
-        cursor = conn.cursor(dictionary=True)
+        cursor = conn.cursor(pymysql.cursors.DictCursor)
 
-        # 1. Procura em ordem cronológica crescente para sequenciar os pedidos (1º, 2º, 3º...)
         query_solicitacoes = """
             SELECT 
                 s.id, s.aluno_id, u.nome AS aluno_nome, u.cpf AS aluno_cpf, 
@@ -338,7 +377,6 @@ def listar_todas_solicitacoes():
             conn.close()
             return jsonify({"status": "success", "solicitacoes": []})
 
-        # 2. Atribui o número sequencial individual de cada aluno
         contador_por_aluno = {}
         for s in solicitacoes:
             aluno_id = s['aluno_id']
@@ -348,7 +386,6 @@ def listar_todas_solicitacoes():
             if isinstance(s.get('data_solicitacao'), datetime):
                 s['data_solicitacao'] = s['data_solicitacao'].strftime('%Y-%m-%dT%H:%M:%S')
 
-        # 3. Inverte a lista para exibir as mais recentes no topo do painel
         solicitacoes.reverse()
 
         solicitacao_ids = [s['id'] for s in solicitacoes]
@@ -407,7 +444,7 @@ def alterar_status_solicitacao():
 def buscar_grade_aluno(aluno_id):
     try:
         conn = get_connection()
-        cursor = conn.cursor(dictionary=True)
+        cursor = conn.cursor(pymysql.cursors.DictCursor)
         query = """
             SELECT 
                 d.nome AS disciplina_nome,

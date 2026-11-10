@@ -1,11 +1,12 @@
 import os
-import mysql.connector
+import pymysql
 
 def get_connection():
-    return mysql.connector.connect(
-        host=os.getenv("DB_HOST", "localhost"),
-        user=os.getenv("DB_USER", "root"),
-        password=os.getenv("DB_PASS", "blank"),
-        database=os.getenv("DB_NAME", "cigarra_db"),
-        port=int(os.getenv("DB_PORT", 3306))
+    # As credenciais serão lidas das variáveis cadastradas no Render.com
+    return pymysql.connect(
+        host=os.getenv('DB_HOST'),
+        port=int(os.getenv('DB_PORT', 3306)),
+        user=os.getenv('DB_USER'),
+        password=os.getenv('DB_PASSWORD'),
+        database=os.getenv('DB_NAME')
     )

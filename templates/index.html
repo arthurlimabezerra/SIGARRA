@@ -305,7 +305,7 @@
         let modoSelecaoModal = 'T1'; 
 
         function formatarCpfInput(input) {
-            if (modoProfessor) return; // Se for professor, permite nome ou texto livre
+            if (modoProfessor) return;
             let v = input.value.replace(/\D/g, '');
             if (v.length > 11) v = v.substring(0, 11);
             input.value = v;

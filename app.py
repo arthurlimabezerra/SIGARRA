@@ -26,6 +26,30 @@ def limpar_cpf(cpf_bruto):
     digitos = ''.join(filter(str.isdigit, str(cpf_bruto))) if cpf_bruto else ''
     return digitos[:11] if len(digitos) <= 11 else digitos
 
+def validar_cpf(cpf_bruto):
+    cpf_limpo = limpar_cpf(cpf_bruto)
+    if len(cpf_limpo) != 11:
+        return False
+    # Rejeita CPFs com todos os dígitos iguais (ex: 111.111.111-11)
+    if cpf_limpo == cpf_limpo[0] * 11:
+        return False
+    
+    nums = [int(c) for c in cpf_limpo]
+    
+    # Cálculo do primeiro dígito verificador
+    soma1 = sum(nums[i] * (10 - i) for i in range(9))
+    resto1 = (soma1 * 10) % 11
+    if resto1 == 10:
+        resto1 = 0
+        
+    # Cálculo do segundo dígito verificador
+    soma2 = sum(nums[i] * (11 - i) for i in range(10))
+    resto2 = (soma2 * 10) % 11
+    if resto2 == 10:
+        resto2 = 0
+        
+    return resto1 == nums[9] and resto2 == nums[10]
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -59,8 +83,8 @@ def cadastrar():
     cpf = limpar_cpf(data.get('cpf'))
     senha = data.get('senha')
 
-    if not nome or not cpf or len(cpf) != 11 or not senha:
-        return jsonify({"status": "error", "message": "Preencha o Nome, um CPF válido (11 dígitos) e Senha."}), 400
+    if not nome or not validar_cpf(cpf) or not senha:
+        return jsonify({"status": "error", "message": "Preencha o Nome, um CPF válido e Senha."}), 400
 
     try:
         conn = get_connection()
@@ -99,8 +123,8 @@ def login():
     cpf = limpar_cpf(data.get('cpf'))
     senha = data.get('senha')
 
-    if not cpf or len(cpf) != 11:
-        return jsonify({"status": "error", "message": "Informe um CPF válido com 11 dígitos."}), 400
+    if not validar_cpf(cpf):
+        return jsonify({"status": "error", "message": "Informe um CPF válido."}), 400
 
     try:
         conn = get_connection()
@@ -160,7 +184,6 @@ def listar_oferta_turmas():
         for row in rows:
             disc_id = row['disciplina_id']
             if disc_id not in disciplinas_map:
-                # Classificação automática baseada no bloco para os filtros
                 bloco_str = str(row['bloco'] or '').lower()
                 categoria = 'basico'
                 if 'eletiv' in bloco_str:
@@ -307,7 +330,6 @@ def minhas_solicitacoes():
             conn.close()
             return jsonify({"status": "success", "solicitacoes": []})
 
-        # Numeração sequencial para o aluno
         solicitacoes.reverse()
         for idx, s in enumerate(solicitacoes, start=1):
             s['numero_pedido'] = idx

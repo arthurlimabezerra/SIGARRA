@@ -38,6 +38,7 @@
         .btn {
             background-color: var(--azul-upe); color: #fff; border: none; padding: 12px 24px;
             font-weight: 600; border-radius: 99px; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+            white-space: nowrap;
         }
         .btn:hover { background-color: var(--azul-hover); transform: translateY(-1px); }
         .btn:disabled { opacity: 0.7; cursor: not-allowed; }
@@ -179,7 +180,7 @@
 
             <!-- ETAPA 1 -->
             <div id="t1" class="tab-step">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; flex-wrap: wrap; gap: 10px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; flex-wrap: wrap; gap: 15px;">
                     <div>
                         <h2 style="color: var(--azul-upe);">Etapa 1: Selecione as cadeiras que está matriculado</h2>
                         <p style="color: var(--text-muted);">Clique na cadeira para definir sua turma e horário.</p>
@@ -208,7 +209,7 @@
             <div id="t2" class="tab-step" style="display: none;">
                 <button class="btn-back" onclick="irParaPasso(1)">&larr; Voltar para Etapa 1</button>
                 
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; flex-wrap: wrap; gap: 10px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; flex-wrap: wrap; gap: 15px;">
                     <h2 style="color: var(--azul-upe);">Etapa 2: Escolher Modificações</h2>
                     <button class="btn" onclick="salvarEtapa2()">Avançar com Seleção Completa &rarr;</button>
                 </div>

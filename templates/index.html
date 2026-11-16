@@ -45,7 +45,7 @@
         .btn-secondary { background-color: #e5e5ea; color: #1d1d1f; }
         .btn-secondary:hover { background-color: #d1d1d6; }
 
-        /* Empurra o botão para o lado direito, mesmo quando quebra de linha */
+        /* Posiciona o botão superior obrigatoriamente na direita */
         .btn-direita { margin-left: auto; }
 
         .btn-back { display: inline-flex; align-items: center; gap: 5px; background: #e5e5ea; border: 1.5px solid #b0b0b5; padding: 8px 16px; border-radius: 20px; cursor: pointer; font-weight: 700; color: #1d1d1f; margin-bottom: 15px; transition: 0.2s; }
@@ -197,7 +197,7 @@
                     <select id="filtro-t1" class="filter-select" onchange="filtrarGradeEtapa1()">
                         <option value="todas">Todas as categorias</option>
                         <option value="basico">Ciclo Básico</option>
-                        <option value="especifica">Específica de Engenharia</option>
+                        <option value="profissional">Ciclo Profissional</option>
                         <option value="eletiva">Eletiva</option>
                     </select>
                 </div>
@@ -231,7 +231,7 @@
                         <select id="filtro-t2" class="filter-select" onchange="filtrarGradeEtapa2Add()">
                             <option value="todas">Todas as categorias</option>
                             <option value="basico">Ciclo Básico</option>
-                            <option value="especifica">Específica de Engenharia</option>
+                            <option value="profissional">Ciclo Profissional</option>
                             <option value="eletiva">Eletiva</option>
                         </select>
                     </div>

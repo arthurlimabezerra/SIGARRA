@@ -124,11 +124,9 @@ def login():
         try:
             conn = get_connection()
             cursor = conn.cursor(pymysql.cursors.DictCursor)
-            # Busca pelo nome ou por CPF sem validação estrita para o professor
             cursor.execute("SELECT id, nome, senha_hash, perfil FROM usuarios WHERE perfil = 'coordenador' AND (cpf = %s OR nome LIKE %s)", (identificador, f"%{identificador}%"))
             usuario = cursor.fetchone()
             
-            # Se não existir coordenador cadastrado, cria ou autentica livremente se corresponder à senha padrão ou direta
             if not usuario:
                 cursor.execute("SELECT id, nome, senha_hash, perfil FROM usuarios WHERE perfil = 'coordenador' LIMIT 1")
                 usuario = cursor.fetchone()
@@ -220,8 +218,8 @@ def listar_oferta_turmas():
                 categoria = 'basico'
                 if 'eletiv' in bloco_str:
                     categoria = 'eletiva'
-                elif 'esp' in bloco_str or 'engenharia' in bloco_str or '2' in bloco_str or '3' in bloco_str or '4' in bloco_str:
-                    categoria = 'especifica'
+                elif 'profissional' in bloco_str or 'especifica' in bloco_str or 'engenharia' in bloco_str or '2' in bloco_str or '3' in bloco_str or '4' in bloco_str:
+                    categoria = 'profissional'
 
                 disciplinas_map[disc_id] = {
                     "id": disc_id,

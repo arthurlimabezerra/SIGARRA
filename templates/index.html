@@ -193,10 +193,6 @@
                 </div>
 
                 <div class="grid-chairs" id="container-materias-atuais"></div>
-
-                <div style="margin-top: 25px; text-align: right;">
-                    <button class="btn" onclick="salvarEtapa1()">Avançar para Modificações &rarr;</button>
-                </div>
             </div>
 
             <!-- ETAPA 2 -->
@@ -365,8 +361,8 @@
             const res = await fetch('/listar-oferta-turmas');
             const data = await res.json();
             if (data.status === 'success') {
-                // Garantir ordenação alfabética por nome
                 ofertaCompleta = data.disciplinas.sort((a, b) => a.nome.localeCompare(b.nome));
+                renderizarTela1();
             }
         }
 

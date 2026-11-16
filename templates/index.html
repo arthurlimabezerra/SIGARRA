@@ -37,9 +37,10 @@
 
         .btn {
             background-color: var(--azul-upe); color: #fff; border: none; padding: 12px 24px;
-            font-weight: 600; border-radius: 99px; cursor: pointer; transition: all 0.2s;
+            font-weight: 600; border-radius: 99px; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
         }
         .btn:hover { background-color: var(--azul-hover); transform: translateY(-1px); }
+        .btn:disabled { opacity: 0.7; cursor: not-allowed; }
         .btn-secondary { background-color: #e5e5ea; color: #1d1d1f; }
         .btn-secondary:hover { background-color: #d1d1d6; }
         .btn-back { display: inline-flex; align-items: center; gap: 5px; background: #e5e5ea; border: 1.5px solid #b0b0b5; padding: 8px 16px; border-radius: 20px; cursor: pointer; font-weight: 700; color: #1d1d1f; margin-bottom: 15px; transition: 0.2s; }
@@ -131,7 +132,7 @@
             </div>
         </section>
 
-        <!-- DASHBOARD DO ALUNO (MENU APÓS LOGIN) -->
+        <!-- DASHBOARD DO ALUNO -->
         <section id="screen-dashboard" class="screen">
             <h2 style="color: var(--azul-upe); margin-bottom: 8px;">Painel do Aluno</h2>
             <p style="color: var(--text-muted); margin-bottom: 25px;">Escolha uma das opções abaixo para prosseguir:</p>
@@ -173,8 +174,13 @@
 
             <!-- ETAPA 1 -->
             <div id="t1" class="tab-step">
-                <h2 style="color: var(--azul-upe);">Etapa 1: Selecione as cadeiras que está matriculado</h2>
-                <p style="color: var(--text-muted); margin-bottom: 15px;">Clique na cadeira para definir sua turma e horário.</p>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+                    <div>
+                        <h2 style="color: var(--azul-upe);">Etapa 1: Selecione as cadeiras que está matriculado</h2>
+                        <p style="color: var(--text-muted);">Clique na cadeira para definir sua turma e horário.</p>
+                    </div>
+                    <button class="btn" onclick="salvarEtapa1()">Avançar para Modificações &rarr;</button>
+                </div>
                 
                 <div class="top-toolbar">
                     <input type="text" id="busca-t1" class="search-input-top" placeholder="Pesquisar cadeiras por nome..." oninput="filtrarGradeEtapa1()">
@@ -197,9 +203,8 @@
             <div id="t2" class="tab-step" style="display: none;">
                 <button class="btn-back" onclick="irParaPasso(1)">&larr; Voltar para Etapa 1</button>
                 
-                <h2 style="color: var(--azul-upe);">Etapa 2: Escolher Modificações</h2>
-                
-                <div style="margin-top: 20px; text-align: right;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; flex-wrap: wrap; gap: 10px;">
+                    <h2 style="color: var(--azul-upe);">Etapa 2: Escolher Modificações</h2>
                     <button class="btn" onclick="salvarEtapa2()">Avançar com Seleção Completa &rarr;</button>
                 </div>
 
@@ -268,7 +273,7 @@
         </div>
     </div>
 
-    <!-- MODAL DETALHE DA SOLICITAÇÃO (PARA O ALUNO) -->
+    <!-- MODAL DETALHE DA SOLICITAÇÃO -->
     <div class="modal" id="modal-detalhe-aluno">
         <div class="modal-content" style="max-width: 600px;">
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e5e5ea; padding-bottom: 12px; margin-bottom: 15px;">
@@ -318,28 +323,41 @@
                 return;
             }
 
+            const btn = document.getElementById('btn-auth-submit');
+            const textoOriginal = btn.innerText;
+            btn.disabled = true;
+            btn.innerText = 'Carregando...';
+
             const url = modoCadastro ? '/cadastrar' : '/login';
             const bodyData = modoCadastro ? { nome, cpf, senha: pass } : { cpf, senha: pass };
 
-            const res = await fetch(url, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(bodyData)
-            });
-            const data = await res.json();
+            try {
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(bodyData)
+                });
+                const data = await res.json();
 
-            if (res.ok) {
-                if (data.user.perfil === 'coordenador') {
-                    window.location.href = '/coordenador';
-                    return;
+                if (res.ok) {
+                    if (data.user.perfil === 'coordenador') {
+                        window.location.href = '/coordenador';
+                        return;
+                    }
+                    document.getElementById('screen-auth').classList.remove('active');
+                    document.getElementById('screen-dashboard').classList.add('active');
+                    document.getElementById('user-header').style.display = 'flex';
+                    document.getElementById('user-name').innerText = `Aluno: ${data.user.nome}`;
+                    await carregarOferta();
+                } else {
+                    alert(data.message || 'Erro na autenticação');
+                    btn.disabled = false;
+                    btn.innerText = textoOriginal;
                 }
-                document.getElementById('screen-auth').classList.remove('active');
-                document.getElementById('screen-dashboard').classList.add('active');
-                document.getElementById('user-header').style.display = 'flex';
-                document.getElementById('user-name', '').innerText = `Aluno: ${data.user.nome}`;
-                await carregarOferta();
-            } else {
-                alert(data.message || 'Erro na autenticação');
+            } catch (err) {
+                alert('Erro de conexão ao autenticar.');
+                btn.disabled = false;
+                btn.innerText = textoOriginal;
             }
         }
 
@@ -347,7 +365,8 @@
             const res = await fetch('/listar-oferta-turmas');
             const data = await res.json();
             if (data.status === 'success') {
-                ofertaCompleta = data.disciplinas;
+                // Garantir ordenação alfabética por nome
+                ofertaCompleta = data.disciplinas.sort((a, b) => a.nome.localeCompare(b.nome));
             }
         }
 
@@ -360,14 +379,12 @@
         async function iniciarNovaSolicitacao() {
             turmasParaRemover = [];
             turmasParaAdicionar = {};
-            // Carregar matrícula atual salva do aluno
             try {
                 const res = await fetch('/minha-matricula-atual');
                 const data = await res.json();
                 matriculasAtuais = {};
                 if (data.status === 'success' && data.matriculas) {
                     data.matriculas.forEach(m => {
-                        // Achar a disciplina correspondente na oferta
                         const disc = ofertaCompleta.find(d => d.turmas.some(t => t.turma_id === m.turma_id));
                         if (disc) {
                             matriculasAtuais[disc.id] = {
@@ -587,7 +604,6 @@
             document.getElementById(`t${passo}`).style.display = 'block';
             document.getElementById(`step-${passo}-label`).classList.add('active');
 
-            // Retorna a tela para o topo ao trocar de etapa
             window.scrollTo({ top: 0, behavior: 'smooth' });
 
             if (passo === 2) renderizarTela2();

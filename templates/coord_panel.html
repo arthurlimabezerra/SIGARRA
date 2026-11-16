@@ -31,7 +31,6 @@
             display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e5e5ea; padding-bottom: 20px; margin-bottom: 25px;
         }
 
-        /* Layout Master-Detail (Duas Colunas) */
         .panel-container {
             display: grid;
             grid-template-columns: 320px 1fr;
@@ -39,99 +38,45 @@
             min-height: 550px;
         }
 
-        /* Sidebar - Lista de Alunos */
         .sidebar-students {
-            background: #ffffff;
-            border: 1px solid #e5e5ea;
-            border-radius: 20px;
-            padding: 18px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            height: 100%;
+            background: #ffffff; border: 1px solid #e5e5ea; border-radius: 20px; padding: 18px;
+            display: flex; flex-direction: column; gap: 12px; height: 100%;
         }
 
         .search-box {
-            width: 100%;
-            padding: 10px 14px;
-            border-radius: 12px;
-            border: 1px solid #d1d1d6;
-            font-size: 0.9rem;
-            outline: none;
-            transition: border-color 0.2s;
+            width: 100%; padding: 10px 14px; border-radius: 12px; border: 1px solid #d1d1d6; font-size: 0.9rem; outline: none; transition: border-color 0.2s;
         }
         .search-box:focus { border-color: var(--azul-upe); }
 
         .students-list {
-            overflow-y: auto;
-            max-height: 500px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            padding-right: 4px;
+            overflow-y: auto; max-height: 500px; display: flex; flex-direction: column; gap: 8px; padding-right: 4px;
         }
 
         .student-item {
-            padding: 12px 16px;
-            border-radius: 14px;
-            border: 1px solid #f0f0f5;
-            background: #f9f9fb;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            padding: 12px 16px; border-radius: 14px; border: 1px solid #f0f0f5; background: #f9f9fb;
+            cursor: pointer; transition: all 0.2s ease; display: flex; justify-content: space-between; align-items: center;
         }
-        .student-item:hover {
-            background: #f0f4f8;
-            border-color: #d0e0f0;
-        }
+        .student-item:hover { background: #f0f4f8; border-color: #d0e0f0; }
         .student-item.active {
-            background: var(--azul-upe);
-            color: #ffffff;
-            border-color: var(--azul-upe);
-            box-shadow: 0 4px 12px rgba(0, 51, 102, 0.2);
+            background: var(--azul-upe); color: #ffffff; border-color: var(--azul-upe); box-shadow: 0 4px 12px rgba(0, 51, 102, 0.2);
         }
-        .student-item.active .student-cpf,
-        .student-item.active .student-count {
-            color: rgba(255, 255, 255, 0.8) !important;
-        }
+        .student-item.active .student-cpf, .student-item.active .student-count { color: rgba(255, 255, 255, 0.8) !important; }
 
         .student-info-name { font-weight: 600; font-size: 0.95rem; }
         .student-cpf { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; }
-        .student-count {
-            font-size: 0.75rem;
-            background: rgba(0,0,0,0.06);
-            padding: 3px 8px;
-            border-radius: 12px;
-            font-weight: 600;
-        }
-        .student-item.active .student-count {
-            background: rgba(255,255,255,0.2);
-        }
+        .student-count { font-size: 0.75rem; background: rgba(0,0,0,0.06); padding: 3px 8px; border-radius: 12px; font-weight: 600; }
+        .student-item.active .student-count { background: rgba(255,255,255,0.2); }
 
-        /* Detalhes da Solicitação */
         .detail-pane {
-            background: #ffffff;
-            border: 1px solid #e5e5ea;
-            border-radius: 20px;
-            padding: 25px;
-            display: flex;
-            flex-direction: column;
+            background: #ffffff; border: 1px solid #e5e5ea; border-radius: 20px; padding: 25px; display: flex; flex-direction: column;
         }
 
         .student-header-detail {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #e5e5ea;
-            padding-bottom: 15px;
-            margin-bottom: 20px;
+            display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e5e5ea; padding-bottom: 15px; margin-bottom: 20px;
         }
 
         .card-solicitacao {
-            background: #f9f9fb; border: 1px solid #e5e5ea; border-radius: 16px; padding: 20px; margin-bottom: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+            background: #f9f9fb; border: 1px solid #e5e5ea; border-radius: 16px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.02);
         }
 
         .badge { padding: 5px 12px; border-radius: 20px; font-weight: 700; font-size: 0.8rem; color: #fff; display: inline-block; }
@@ -146,8 +91,7 @@
         .tag-add { background: #e5f0ff; color: var(--azul-upe); }
 
         .btn {
-            padding: 8px 18px; border-radius: 99px; border: none; cursor: pointer; font-weight: 600;
-            color: #fff; transition: all 0.2s; font-size: 0.88rem;
+            padding: 8px 18px; border-radius: 99px; border: none; cursor: pointer; font-weight: 600; color: #fff; transition: all 0.2s; font-size: 0.88rem;
         }
         .btn:hover { opacity: 0.9; transform: translateY(-1px); }
         .btn-deferir { background: var(--verde-sucesso); }
@@ -156,20 +100,10 @@
         .btn-secondary:hover { background-color: #d1d1d6; color: #000; }
 
         .btn-grade {
-            background-color: #ffffff;
-            color: var(--vermelho-upe);
-            border: 1.5px solid var(--vermelho-upe);
-            padding: 8px 16px;
-            border-radius: 10px;
-            font-size: 0.88rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
+            background-color: #ffffff; color: var(--vermelho-upe); border: 1.5px solid var(--vermelho-upe);
+            padding: 8px 16px; border-radius: 10px; font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease;
         }
-        .btn-grade:hover {
-            background-color: #fff5f5;
-            transform: translateY(-1px);
-        }
+        .btn-grade:hover { background-color: #fff5f5; transform: translateY(-1px); }
 
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
@@ -177,20 +111,13 @@
             display: flex; align-items: center; justify-content: center; z-index: 1000;
         }
         .modal-content {
-            background: #ffffff; border-radius: 20px; width: 90%; max-width: 580px;
-            padding: 25px; box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+            background: #ffffff; border-radius: 20px; width: 90%; max-width: 580px; padding: 25px; box-shadow: 0 15px 35px rgba(0,0,0,0.15);
         }
         .modal-header {
-            display: flex; justify-content: space-between; align-items: center;
-            border-bottom: 1px solid #e5e5ea; padding-bottom: 12px; margin-bottom: 15px;
+            display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e5e5ea; padding-bottom: 12px; margin-bottom: 15px;
         }
-        .btn-close {
-            background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-muted);
-        }
-        .item-grade {
-            background-color: #f9f9fb; border: 1px solid #e5e5ea; padding: 12px 16px;
-            border-radius: 10px; margin-bottom: 10px;
-        }
+        .btn-close { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-muted); }
+        .item-grade { background-color: #f9f9fb; border: 1px solid #e5e5ea; padding: 12px 16px; border-radius: 10px; margin-bottom: 10px; }
 
         .empty-state { text-align: center; color: var(--text-muted); padding: 60px 20px; font-size: 1rem; }
 
@@ -207,13 +134,12 @@
         <header class="header-bar">
             <div>
                 <h1 style="color: var(--azul-upe); font-size: 1.6rem;">Painel da Coordenação</h1>
-                <p style="color: var(--text-muted); font-size: 0.95rem; margin-top: 4px;">POLI UPE • Gerenciamento de Solicitações de Modificação</p>
+                <p style="color: var(--text-muted); font-size: 0.95rem; margin-top: 4px;">Escola Politécnica de Pernambuco • UPE</p>
             </div>
             <button class="btn btn-secondary" onclick="fazerLogout()">Sair</button>
         </header>
 
         <div class="panel-container">
-            <!-- Menu Lateral de Alunos -->
             <aside class="sidebar-students">
                 <input type="text" id="search-student" class="search-box" placeholder="🔍 Buscar aluno ou CPF..." oninput="filtrarAlunos()">
                 <div class="students-list" id="container-alunos-lista">
@@ -221,14 +147,12 @@
                 </div>
             </aside>
 
-            <!-- Painel de Detalhes e Solicitações -->
             <section class="detail-pane" id="container-detalhe-aluno">
                 <div class="empty-state">Selecione um aluno no menu à esquerda para visualizar suas solicitações.</div>
             </section>
         </div>
     </main>
 
-    <!-- Modal para Grade Curricular -->
     <div id="modalGrade" class="modal-overlay" style="display: none;">
         <div class="modal-content">
             <div class="modal-header">
@@ -257,6 +181,7 @@
                 }[tag])
             );
         }
+
         let alunosAgrupados = {};
         let alunoSelecionadoId = null;
 
@@ -275,7 +200,6 @@
                     return;
                 }
 
-                // Agrupar solicitações por aluno_id
                 alunosAgrupados = {};
                 data.solicitacoes.forEach(s => {
                     if (!alunosAgrupados[s.aluno_id]) {
@@ -291,7 +215,6 @@
 
                 renderizarListaAlunos();
 
-                // Manter aluno selecionado ou selecionar o primeiro por padrão
                 const ids = Object.keys(alunosAgrupados);
                 if (ids.length > 0) {
                     if (!alunoSelecionadoId || !alunosAgrupados[alunoSelecionadoId]) {
@@ -312,7 +235,6 @@
 
             const termo = filtro.toLowerCase().trim();
             const ids = Object.keys(alunosAgrupados);
-
             let encontrados = 0;
 
             ids.forEach(id => {
@@ -371,7 +293,6 @@
             aluno.solicitacoes.forEach((s) => {
                 const remItens = s.itens ? s.itens.filter(i => i.tipo === 'REMOVER') : [];
                 const addItens = s.itens ? s.itens.filter(i => i.tipo === 'ADICIONAR') : [];
-
                 const dataFmt = s.data_solicitacao ? new Date(s.data_solicitacao).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
 
                 html += `

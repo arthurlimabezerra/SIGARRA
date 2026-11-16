@@ -44,6 +44,10 @@
         .btn:disabled { opacity: 0.7; cursor: not-allowed; }
         .btn-secondary { background-color: #e5e5ea; color: #1d1d1f; }
         .btn-secondary:hover { background-color: #d1d1d6; }
+
+        /* Empurra o botão para o lado direito, mesmo quando quebra de linha */
+        .btn-direita { margin-left: auto; }
+
         .btn-back { display: inline-flex; align-items: center; gap: 5px; background: #e5e5ea; border: 1.5px solid #b0b0b5; padding: 8px 16px; border-radius: 20px; cursor: pointer; font-weight: 700; color: #1d1d1f; margin-bottom: 15px; transition: 0.2s; }
         .btn-back:hover { background: #d1d1d6; }
 
@@ -185,7 +189,7 @@
                         <h2 style="color: var(--azul-upe);">Etapa 1: Selecione as cadeiras que está matriculado</h2>
                         <p style="color: var(--text-muted);">Clique na cadeira para definir sua turma e horário.</p>
                     </div>
-                    <button class="btn" onclick="salvarEtapa1()">Avançar para Modificações &rarr;</button>
+                    <button class="btn btn-direita" onclick="salvarEtapa1()">Avançar para Modificações &rarr;</button>
                 </div>
                 
                 <div class="top-toolbar" style="margin-top: 20px;">
@@ -200,7 +204,7 @@
 
                 <div class="grid-chairs" id="container-materias-atuais"></div>
 
-                <div style="margin-top: 25px; text-align: right;">
+                <div style="margin-top: 25px; display: flex; justify-content: flex-end;">
                     <button class="btn" onclick="salvarEtapa1()">Avançar para Modificações &rarr;</button>
                 </div>
             </div>
@@ -211,7 +215,7 @@
                 
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; flex-wrap: wrap; gap: 15px;">
                     <h2 style="color: var(--azul-upe);">Etapa 2: Escolher Modificações</h2>
-                    <button class="btn" onclick="salvarEtapa2()">Avançar com Seleção Completa &rarr;</button>
+                    <button class="btn btn-direita" onclick="salvarEtapa2()">Avançar com Seleção Completa &rarr;</button>
                 </div>
 
                 <div style="background: #fff; padding: 20px; border-radius: 18px; border: 1px solid #e5e5ea; margin-top: 20px; margin-bottom: 25px;">

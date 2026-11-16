@@ -10,7 +10,6 @@ from database import get_connection
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', 'chave_secreta_poli_upe_substitua_em_producao')
 
-# Fuso horário fixo de Recife/Pernambuco (UTC-3)
 FUSO_RECIFE = timezone(timedelta(hours=-3))
 
 UPLOAD_FOLDER = 'uploads'
@@ -24,30 +23,20 @@ def allowed_file(filename):
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def limpar_cpf(cpf_bruto):
-    return ''.join(filter(str.isdigit, str(cpf_bruto))) if cpf_bruto else ''
-
-# ---------------------------------------------------------
-# ROTAS DE PÁGINAS (HTML)
-# ---------------------------------------------------------
+    digitos = ''.join(filter(str.isdigit, str(cpf_bruto))) if cpf_bruto else ''
+    return digitos[:11] if len(digitos) <= 11 else digitos
 
 @app.route('/')
 def index():
     return render_template('index.html')
 
-
 @app.route('/coordenador')
 def coordenador_page():
     return render_template('coord_panel.html')
 
-
 @app.route('/uploads/<path:filename>')
 def serve_upload(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
-
-
-# ---------------------------------------------------------
-# ROTAS DE AUTENTICAÇÃO
-# ---------------------------------------------------------
 
 @app.route('/me', methods=['GET'])
 def usuario_atual():
@@ -63,7 +52,6 @@ def usuario_atual():
         }), 200
     return jsonify({"status": "error", "message": "Não autenticado"}), 401
 
-
 @app.route('/cadastrar', methods=['POST'])
 def cadastrar():
     data = request.json
@@ -71,28 +59,24 @@ def cadastrar():
     cpf = limpar_cpf(data.get('cpf'))
     senha = data.get('senha')
 
-    if not nome or not cpf or not senha:
-        return jsonify({"status": "error", "message": "Preencha o Nome, CPF e Senha."}), 400
+    if not nome or not cpf or len(cpf) != 11 or not senha:
+        return jsonify({"status": "error", "message": "Preencha o Nome, um CPF válido (11 dígitos) e Senha."}), 400
 
     try:
         conn = get_connection()
         cursor = conn.cursor(pymysql.cursors.DictCursor)
-
         cursor.execute("SELECT id FROM usuarios WHERE cpf = %s", (cpf,))
         if cursor.fetchone():
             conn.close()
             return jsonify({"status": "error", "message": "CPF já cadastrado no sistema."}), 400
 
         senha_hash = generate_password_hash(senha)
-        
-        # Volta ao cursor padrão para fazer o insert
         cursor = conn.cursor()
         cursor.execute(
             "INSERT INTO usuarios (nome, cpf, senha_hash, perfil) VALUES (%s, %s, %s, 'aluno')",
             (nome, cpf, senha_hash)
         )
         conn.commit()
-
         new_id = cursor.lastrowid
         conn.close()
 
@@ -106,16 +90,17 @@ def cadastrar():
             "message": "Cadastro realizado com sucesso!",
             "user": {"id": new_id, "nome": nome, "cpf": cpf, "perfil": "aluno"}
         }), 201
-
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
-
 
 @app.route('/login', methods=['POST'])
 def login():
     data = request.json
     cpf = limpar_cpf(data.get('cpf'))
     senha = data.get('senha')
+
+    if not cpf or len(cpf) != 11:
+        return jsonify({"status": "error", "message": "Informe um CPF válido com 11 dígitos."}), 400
 
     try:
         conn = get_connection()
@@ -144,16 +129,10 @@ def login():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
-
 @app.route('/logout', methods=['POST'])
 def logout():
     session.clear()
     return jsonify({"status": "success", "message": "Sessão encerrada com sucesso."}), 200
-
-
-# ---------------------------------------------------------
-# ROTAS DE MODIFICAÇÃO DE MATRÍCULA
-# ---------------------------------------------------------
 
 @app.route('/listar-oferta-turmas', methods=['GET'])
 def listar_oferta_turmas():
@@ -181,10 +160,19 @@ def listar_oferta_turmas():
         for row in rows:
             disc_id = row['disciplina_id']
             if disc_id not in disciplinas_map:
+                # Classificação automática baseada no bloco para os filtros
+                bloco_str = str(row['bloco'] or '').lower()
+                categoria = 'basico'
+                if 'eletiv' in bloco_str:
+                    categoria = 'eletiva'
+                elif 'esp' in bloco_str or 'engenharia' in bloco_str or '2' in bloco_str or '3' in bloco_str or '4' in bloco_str:
+                    categoria = 'especifica'
+
                 disciplinas_map[disc_id] = {
                     "id": disc_id,
                     "nome": row['disciplina_nome'],
                     "bloco": row['bloco'],
+                    "categoria": categoria,
                     "turmas": []
                 }
             if row['turma_id']:
@@ -199,7 +187,6 @@ def listar_oferta_turmas():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
-
 @app.route('/salvar-matricula-atual', methods=['POST'])
 def salvar_matricula_atual():
     if 'user_id' not in session:
@@ -212,21 +199,17 @@ def salvar_matricula_atual():
     try:
         conn = get_connection()
         cursor = conn.cursor()
-
         cursor.execute("DELETE FROM matricula_atual WHERE aluno_id = %s", (aluno_id,))
-
         for t_id in turmas_ids:
             cursor.execute(
                 "INSERT INTO matricula_atual (aluno_id, turma_id) VALUES (%s, %s)",
                 (aluno_id, t_id)
             )
-
         conn.commit()
         conn.close()
         return jsonify({"status": "success", "message": "Grade atual salva com sucesso!"})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
-
 
 @app.route('/minha-matricula-atual', methods=['GET'])
 def minha_matricula_atual():
@@ -251,33 +234,25 @@ def minha_matricula_atual():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
-
 @app.route('/enviar-apelo-modificacao', methods=['POST'])
 def enviar_apelo_modificacao():
     if 'user_id' not in session:
         return jsonify({"status": "error", "message": "Sessão expirada."}), 401
 
     aluno_id = session['user_id']
-    justificativa = request.form.get('justificativa')
+    justificativa = request.form.get('justificativa', '')
 
     turmas_remover = json.loads(request.form.get('turmas_remover', '[]'))
     turmas_adicionar = json.loads(request.form.get('turmas_adicionar', '[]'))
 
     if not turmas_adicionar and not turmas_remover:
-        return jsonify(
-            {"status": "error", "message": "Selecione ao menos uma disciplina para adicionar ou remover."}), 400
-
-    if not justificativa or not justificativa.strip():
-        return jsonify({"status": "error", "message": "Digite a justificativa."}), 400
+        return jsonify({"status": "error", "message": "Selecione ao menos uma disciplina para adicionar ou remover."}), 400
 
     caminho_arquivo = None
     file = request.files.get('documento')
-
     if file and file.filename != '':
         if not allowed_file(file.filename):
-            return jsonify(
-                {"status": "error", "message": "Formato de arquivo inválido. Envie apenas PDF, PNG ou JPG."}), 400
-
+            return jsonify({"status": "error", "message": "Formato de arquivo inválido. Envie apenas PDF, PNG ou JPG."}), 400
         filename = secure_filename(file.filename)
         caminho_arquivo = os.path.join(app.config['UPLOAD_FOLDER'], f"apelo_{aluno_id}_{filename}")
         file.save(caminho_arquivo)
@@ -285,8 +260,6 @@ def enviar_apelo_modificacao():
     try:
         conn = get_connection()
         cursor = conn.cursor()
-
-        # Data e hora exatas no fuso horário UTC-3 (Recife)
         agora = datetime.now(FUSO_RECIFE).strftime('%Y-%m-%d %H:%M:%S')
 
         cursor.execute(
@@ -309,96 +282,49 @@ def enviar_apelo_modificacao():
 
         conn.commit()
         conn.close()
-        return jsonify({"status": "success", "message": "Solicitação enviada com sucesso!"})
+        return jsonify({"status": "success", "message": "Solicitação enviada com sucesso!", "solicitacao_id": solicitacao_id})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
+@app.route('/aluno/minhas-solicitacoes', methods=['GET'])
+def minhas_solicitacoes():
+    if 'user_id' not in session:
+        return jsonify({"status": "error", "message": "Não autenticado"}), 401
 
-# ---------------------------------------------------------
-# ROTA DO PAINEL DO ALUNO (CONSULTA EXTERNA DE CPF)
-# ---------------------------------------------------------
-
-@app.route('/api/status-matricula', methods=['GET'])
-def status_matricula():
-    cpf = request.args.get('cpf')
-    cpf = limpar_cpf(cpf)
-    
-    if not cpf or len(cpf) != 11:
-        return jsonify({"status": "error", "message": "CPF inválido."}), 400
-
+    aluno_id = session['user_id']
     try:
         conn = get_connection()
         cursor = conn.cursor(pymysql.cursors.DictCursor)
-        
-        # Puxa a solicitação mais recente vinculada a esse CPF
-        query = """
-            SELECT u.nome, s.status, s.justificativa AS observacao
-            FROM solicitacoes_modificacao s
-            JOIN usuarios u ON s.aluno_id = u.id
-            WHERE u.cpf = %s
-            ORDER BY s.data_solicitacao DESC
-            LIMIT 1
-        """
-        cursor.execute(query, (cpf,))
-        resultado = cursor.fetchone()
-        conn.close()
-
-        if resultado:
-            return jsonify(resultado), 200
-        else:
-            return jsonify({"status": "error", "message": "Nenhuma solicitação encontrada"}), 404
-
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
-
-
-# ---------------------------------------------------------
-# ROTAS DO COORDENADOR
-# ---------------------------------------------------------
-
-@app.route('/coordenador/solicitacoes', methods=['GET'])
-def listar_todas_solicitacoes():
-    try:
-        conn = get_connection()
-        cursor = conn.cursor(pymysql.cursors.DictCursor)
-
-        query_solicitacoes = """
-            SELECT 
-                s.id, s.aluno_id, u.nome AS aluno_nome, u.cpf AS aluno_cpf, 
-                s.justificativa, s.caminho_anexo, s.status, s.data_solicitacao
-            FROM solicitacoes_modificacao s
-            JOIN usuarios u ON s.aluno_id = u.id
-            ORDER BY s.data_solicitacao ASC
-        """
-        cursor.execute(query_solicitacoes)
+        cursor.execute("""
+            SELECT id, justificativa, caminho_anexo, status, data_solicitacao
+            FROM solicitacoes_modificacao
+            WHERE aluno_id = %s
+            ORDER BY data_solicitacao DESC
+        """, (aluno_id,))
         solicitacoes = cursor.fetchall()
 
         if not solicitacoes:
             conn.close()
             return jsonify({"status": "success", "solicitacoes": []})
 
-        contador_por_aluno = {}
-        for s in solicitacoes:
-            aluno_id = s['aluno_id']
-            contador_por_aluno[aluno_id] = contador_por_aluno.get(aluno_id, 0) + 1
-            s['numero_pedido_aluno'] = contador_por_aluno[aluno_id]
-
+        # Numeração sequencial para o aluno
+        solicitacoes.reverse()
+        for idx, s in enumerate(solicitacoes, start=1):
+            s['numero_pedido'] = idx
             if isinstance(s.get('data_solicitacao'), datetime):
                 s['data_solicitacao'] = s['data_solicitacao'].strftime('%Y-%m-%dT%H:%M:%S')
-
         solicitacoes.reverse()
 
         solicitacao_ids = [s['id'] for s in solicitacoes]
         format_strings = ','.join(['%s'] * len(solicitacao_ids))
 
-        query_itens = f"""
+        cursor.execute(f"""
             SELECT i.solicitacao_id, i.tipo, d.nome AS disciplina_nome, t.codigo_turma, t.horario AS horario_descricao
             FROM itens_solicitacao_modificacao i
             JOIN turmas t ON i.turma_id = t.id
             JOIN disciplinas d ON t.disciplina_id = d.id
             WHERE i.solicitacao_id IN ({format_strings})
-        """
-        cursor.execute(query_itens, tuple(solicitacao_ids))
+        """, tuple(solicitacao_ids))
         todos_itens = cursor.fetchall()
         conn.close()
 
@@ -416,6 +342,60 @@ def listar_todas_solicitacoes():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
+@app.route('/coordenador/solicitacoes', methods=['GET'])
+def listar_todas_solicitacoes():
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(pymysql.cursors.DictCursor)
+        cursor.execute("""
+            SELECT 
+                s.id, s.aluno_id, u.nome AS aluno_nome, u.cpf AS aluno_cpf, 
+                s.justificativa, s.caminho_anexo, s.status, s.data_solicitacao
+            FROM solicitacoes_modificacao s
+            JOIN usuarios u ON s.aluno_id = u.id
+            ORDER BY s.data_solicitacao ASC
+        """)
+        solicitacoes = cursor.fetchall()
+
+        if not solicitacoes:
+            conn.close()
+            return jsonify({"status": "success", "solicitacoes": []})
+
+        contador_por_aluno = {}
+        for s in solicitacoes:
+            aluno_id = s['aluno_id']
+            contador_por_aluno[aluno_id] = contador_por_aluno.get(aluno_id, 0) + 1
+            s['numero_pedido_aluno'] = contador_por_aluno[aluno_id]
+            if isinstance(s.get('data_solicitacao'), datetime):
+                s['data_solicitacao'] = s['data_solicitacao'].strftime('%Y-%m-%dT%H:%M:%S')
+
+        solicitacoes.reverse()
+        solicitacao_ids = [s['id'] for s in solicitacoes]
+        format_strings = ','.join(['%s'] * len(solicitacao_ids))
+
+        cursor.execute(f"""
+            SELECT i.solicitacao_id, i.tipo, d.nome AS disciplina_nome, t.codigo_turma, t.horario AS horario_descricao
+            FROM itens_solicitacao_modificacao i
+            JOIN turmas t ON i.turma_id = t.id
+            JOIN disciplinas d ON t.disciplina_id = d.id
+            WHERE i.solicitacao_id IN ({format_strings})
+        """, tuple(solicitacao_ids))
+        todos_itens = cursor.fetchall()
+        conn.close()
+
+        itens_por_solicitacao = {}
+        for item in todos_itens:
+            s_id = item.pop('solicitacao_id')
+            if s_id not in itens_por_solicitacao:
+                itens_por_solicitacao[s_id] = []
+            itens_por_solicitacao[s_id].append(item)
+
+        for s in solicitacoes:
+            s['itens'] = itens_por_solicitacao.get(s['id'], [])
+
+        return jsonify({"status": "success", "solicitacoes": solicitacoes})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 @app.route('/coordenador/alterar-status', methods=['POST'])
 def alterar_status_solicitacao():
@@ -439,13 +419,12 @@ def alterar_status_solicitacao():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
-
 @app.route('/coordenador/grade-aluno/<int:aluno_id>', methods=['GET'])
 def buscar_grade_aluno(aluno_id):
     try:
         conn = get_connection()
         cursor = conn.cursor(pymysql.cursors.DictCursor)
-        query = """
+        cursor.execute("""
             SELECT 
                 d.nome AS disciplina_nome,
                 d.bloco,
@@ -457,14 +436,12 @@ def buscar_grade_aluno(aluno_id):
             JOIN disciplinas d ON t.disciplina_id = d.id
             WHERE m.aluno_id = %s
             ORDER BY d.bloco ASC, d.nome ASC
-        """
-        cursor.execute(query, (aluno_id,))
+        """, (aluno_id,))
         matriculas = cursor.fetchall()
         conn.close()
         return jsonify({"status": "success", "matriculas": matriculas})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
-
 
 if __name__ == '__main__':
     app.run(debug=True)

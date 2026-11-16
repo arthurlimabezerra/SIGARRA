@@ -179,7 +179,7 @@
 
             <!-- ETAPA 1 -->
             <div id="t1" class="tab-step">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; flex-wrap: wrap; gap: 10px;">
                     <div>
                         <h2 style="color: var(--azul-upe);">Etapa 1: Selecione as cadeiras que está matriculado</h2>
                         <p style="color: var(--text-muted);">Clique na cadeira para definir sua turma e horário.</p>
@@ -187,7 +187,7 @@
                     <button class="btn" onclick="salvarEtapa1()">Avançar para Modificações &rarr;</button>
                 </div>
                 
-                <div class="top-toolbar">
+                <div class="top-toolbar" style="margin-top: 20px;">
                     <input type="text" id="busca-t1" class="search-input-top" placeholder="Pesquisar cadeiras por nome..." oninput="filtrarGradeEtapa1()">
                     <select id="filtro-t1" class="filter-select" onchange="filtrarGradeEtapa1()">
                         <option value="todas">Todas as categorias</option>
